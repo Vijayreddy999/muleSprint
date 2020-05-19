@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="contactsBusinessLogicFlow" doc:id="e334d567-f159-4e6a-967b-0ea809ed75b4" >
+		<set-variable value="#[attributes.queryParams.accountType]" doc:name="Set Variable" doc:id="11851e3a-9e48-4cbb-ae55-796325508908" variableName="database"/>
+		<choice doc:name="Choice" doc:id="f0b6f33e-bcbd-4292-a609-726d1305f271" >
+			<when expression='#[vars.database=="sf"]'>
+				<salesforce:create type="Contact" doc:name="Create" doc:id="1c4b02f6-1c8e-4d8b-b41b-8d10c4c17637" config-ref="Salesforce_Config"/>
+				<scripting:execute doc:name="Execute" doc:id="0819bc19-23e4-47dd-8243-523d61a750dc" engine="groovy">
+					<scripting:code ><![CDATA[
+      flow2 = registry.lookupByName("databaseContactsFlow").get();
+            flow3 = registry.lookupByName("salesforceContactsFlow").get();
+             if (flow3.isStopped())
+        flow3.start()
+      
+      if (flow2.isStarted())
+        flow2.stop()]]></scripting:code>
+				</scripting:execute>
+				<logger level="INFO" doc:name="Logger" doc:id="d06ac3b6-9589-44c4-adc2-5721e5339926" message="Contacts salesforce triggered..!!"/>
+			</when>
+			<when expression='#[vars.database=="db"]'>
+				<db:bulk-insert doc:name="Bulk insert" doc:id="17876c93-4474-4d8c-bc37-ac93f9bc97d6" config-ref="Database_Config">
+					<db:sql><![CDATA[insert into contacts
+(FirstName,LastName,Email,Description,Department,LastModifiedDate) values
+(:FirstName,:LastName,:Email,:Description,:Department,CURRENT_TIMESTAMP());]]></db:sql>
+				</db:bulk-insert>
+				<scripting:execute doc:name="Execute" doc:id="74fa104a-4675-4a18-9b9a-596855517578" engine="groovy">
+					<scripting:code><![CDATA[flow2 = registry.lookupByName("salesforceContactsFlow").get();
+        flow3 = registry.lookupByName("databaseContactsFlow").get();
+      
+      if (flow2.isStarted())
+        flow2.stop()
+       
+       if(flow3.isStopped())
+       flow3.start()
+      ]]></scripting:code>
+				</scripting:execute>
+				<logger level="INFO" doc:name="Logger" doc:id="a4395031-5795-4448-9d3c-7834e778aab4" message="Contacts DB Triggered...!!" />
+			</when>
+			<otherwise>
+				<logger level="INFO" doc:name="Logger" doc:id="762cc62a-cc6d-4451-90b2-019c06832a1e" message="Processing..!!"/>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="8faef2ae-85ad-4466-b5e9-9d8c8edc29ab" type="ANY" >
+				<flow-ref doc:name="Flow Reference" doc:id="8392abac-c0b3-4b47-bd76-21c0a7d5e8c3" name="errorHandlingFlow" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="salesforceContactsFlow" doc:id="70df2bba-40d1-4499-8712-fc6d440303d7" initialState="started">
+		<salesforce:new-object-listener doc:name="On New Object" doc:id="e543829d-8a0e-43ea-9cda-8ce35f9fa7a4" config-ref="Salesforce_Config" objectType="Contact" readTimeout="1" readTimeoutUnit="MINUTES">
+			<scheduling-strategy >
+				<fixed-frequency frequency="10" timeUnit="SECONDS"/>
+			</scheduling-strategy>
+		</salesforce:new-object-listener>
+		<ee:transform doc:name="Transform Message" doc:id="f34c5fb8-a08a-44a2-b7e3-0739d1301745" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+[{
+	Department: payload.Department,
+	Email: payload.Email,
+	Description: payload.Description,
+	FirstName: payload.FirstName,
+	LastName: payload.LastName
+}]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<db:bulk-insert doc:name="Bulk insert" doc:id="23cbf6fc-a984-4bc0-be83-592caae1708f" config-ref="Database_Config">
+			<db:sql ><![CDATA[insert into contacts
+(FirstName,LastName,Email,Description,Department,LastModifiedDate) values
+(:FirstName,:LastName,:Email,:Description,:Department,CURRENT_TIMESTAMP());]]></db:sql>
+		</db:bulk-insert>
+		<logger level="INFO" doc:name="Logger" doc:id="a619c7d7-f99f-4deb-bd41-6659a5b5a73b" message="Successfully added contact to salesforce..!!"/>
+	</flow>
+	<flow name="databaseContactsFlow" doc:id="e776dfa4-7b71-48e7-8c09-46e965e3512d" initialState="stopped">
+		<db:listener doc:name="On Table Row" doc:id="985581c9-abca-4174-abc1-fa612df331db" config-ref="Database_Config" table="contacts" watermarkColumn="Email" idColumn="Email">
+			<scheduling-strategy >
+				<fixed-frequency frequency="10" timeUnit="SECONDS"/>
+			</scheduling-strategy>
+		</db:listener>
+		<ee:transform doc:name="Transform Message" doc:id="cbbd3177-155c-4e6c-9fc9-ced2a0e17604" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+[{
+	LastName: payload.LastName,
+	FirstName: payload.FirstName,
+	Email: payload.Email,
+	Department: payload.Department,
+	Description: payload.Description
+}]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create type="Contact" doc:name="Create" doc:id="7274ab9e-0335-4e10-80cf-725976331bad" config-ref="Salesforce_Config"/>
+		<logger level="INFO" doc:name="Logger" doc:id="ff586a38-3048-43b5-bae8-095bfe0bb71f" message="Contacts successfully added to DB...!"/>
+	</flow>
+</mule>

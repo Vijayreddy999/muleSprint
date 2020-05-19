@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="getAccountsFlowFlow" doc:id="faf6dc72-dd26-43af-af1b-d2028b33447d" >
+		<set-variable value="#[attributes.queryParams.accountType]" doc:name="Set Variable" doc:id="f24e7b01-9cb1-47ed-a8e5-0b7e21dc45a4" variableName="name"/>
+		<choice doc:name="Choice" doc:id="d244fd57-a78d-46af-a9fe-806fb25b4102" >
+			<when expression='#[vars.name=="sf"]'>
+				<salesforce:query doc:name="Query" doc:id="887b78b0-1197-401e-9a70-e719fd67995f" config-ref="Salesforce_Config">
+					<salesforce:salesforce-query ><![CDATA[SELECT AccountNumber,Description,Name,NumberOfEmployees,Type,LastModifiedDate FROM Account]]></salesforce:salesforce-query>
+				</salesforce:query>
+			</when>
+			<when expression='#[vars.name=="db"]'>
+				<db:select doc:name="Select" doc:id="76408444-398b-4532-aa01-93778bd31225" config-ref="Database_Config">
+					<db:sql ><![CDATA[select * from accounts]]></db:sql>
+				</db:select>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="17b1c6c7-3f80-4aa3-885c-ffe0699eb921" message="Processing"/>
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="Transform Message" doc:id="c67a55c8-e5fb-468e-81f7-85e76932711f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="4dab9984-b68d-49de-9ed0-449b93db4802" type="ANY" >
+				<flow-ref doc:name="Flow Reference" doc:id="955b7a41-6849-4218-a83f-942fbb384f06" name="errorHandlingFlow" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="geContactsFlow" doc:id="1db3437b-e22f-4ca2-b947-2e54bf526ba6" >
+		<set-variable value="#[attributes.queryParams.accountType]" doc:name="Set Variable" doc:id="10c391f1-5b88-4502-acba-2aa087e3a113" variableName="name"/>
+		<choice doc:name="Choice" doc:id="8fb6626e-57e1-471c-9d7d-8fdc9387942f" >
+			<when expression='#[vars.name=="sf"]'>
+				<salesforce:query doc:name="Query" doc:id="2208486b-8864-4d52-bbf5-d92526779622" config-ref="Salesforce_Config">
+					<salesforce:salesforce-query ><![CDATA[SELECT FirstName,LastName,Email,Description,Department,LastModifiedDate FROM Contact]]></salesforce:salesforce-query>
+				</salesforce:query>
+			</when>
+			<when expression='#[vars.name=="db"]'>
+				<db:select doc:name="Select" doc:id="79c15fde-9d1c-4fa1-912c-722b1233633f" config-ref="Database_Config">
+					<db:sql ><![CDATA[select * from contacts]]></db:sql>
+				</db:select>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="2c045580-35d5-490c-8e57-5d7f0979becf" message="Processing...!"/>
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="Transform Message" doc:id="f8607673-5de2-4474-a9d0-6fc9f154237f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

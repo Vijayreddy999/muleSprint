@@ -1,0 +1,145 @@
+#%RAML 1.0
+baseUri: https://anypoint.mulesoft.com/mocking/api/v1/links/4d14d1eb-88e2-41ab-bca3-5418a7961dcc/ # 
+title: SalesForce Bi-Directional API
+
+types:
+  Accounts: !include datatypes/Accounts.raml
+  Contacts: !include datatypes/Contacts.raml
+
+/accounts:
+  get:
+    displayName: Get all accounts
+    description: Retrieves a list of all accounts
+    queryParameters:
+      accountType:
+        displayName: Account Type
+        description: Type of account, such as Salesforce or Database
+        required: true
+        type: string
+        enum: [sf,db]
+    responses:
+      200:
+        description: Success
+        body:
+          application/json:
+            type: Accounts[]
+            examples:
+              output: !include examples/accountsExample.raml
+      400:
+        body:
+          application/json:
+            example:
+              "message": "Error retrieving data from the Account database"
+      404:
+        body:
+          application/json:
+            example:
+              "message": "Error 404 Not Found!"
+      500:
+        body:
+          application/json:
+            example:
+              "message": "Internal server error!"
+  
+  post:
+    displayName: Add Account
+    description: Creates/Adds a new Account to the system based on a given array of Account objects
+    body:
+      application/json:
+        description: Payload should be an array of Account objects with all fields present for each Account object.
+        type: Accounts[]
+        examples: 
+          input: !include examples/accountsNoIdExample.raml
+    responses:
+      201:
+        description: Success
+        body:
+          application/json:
+            example:
+              message: "Account created successfully"    
+      400:
+        body:
+          application/json:
+             example: 
+               message: "Error creating accounts. Please check the JSON object and make sure it's valid."
+      404:
+        body:
+          application/json:
+            example:
+              "message": "Error 404 Not Found!"
+      500:
+        body:
+          application/json:
+            example:
+              "message": "Internal server error!"
+
+/contacts:
+  get:
+    displayName: Get all contacts
+    description: Retrieves a list of all contacts
+    queryParameters:
+      accountType:
+        displayName: Contact Type
+        description: Type of contact, such as Salesforce or Database
+        required: true
+        type: string
+        enum: [sf, db]
+    responses:
+      200:
+        description: Success
+        body:
+          application/json:
+            type: Contacts[]
+            examples:
+              output: !include examples/contactsExample.raml
+      400:
+        body:
+          application/json:
+            example:
+              "message": "Error retrieving data from the Contacts database"
+      404:
+        body:
+          application/json:
+            example:
+              "message": "Error 404 Not Found!"
+      500:
+        body:
+          application/json:
+            example:
+              "message": "Internal server error!"
+  
+  post:
+    displayName: Add Contact
+    description: Creates/Adds a new Contact to the system based on a given array of Contact objects
+    body:
+      application/json:
+        description: Payload should be an array of Account objects with all fields present for each Account object.
+        type: Contacts[]
+        examples: 
+          input: !include examples/contactsNoIdExample.raml
+    responses:
+      201:
+        description: Success
+        body:
+          application/json:
+            example:
+              message: "Contacts created successfully"    
+      400:
+        body:
+          application/json:
+             example: 
+               message: "Error creating contacts. Please check the JSON object and make sure it's valid."
+      404:
+        body:
+          application/json:
+            example:
+              "message": "Error 404 Not Found!"
+      500:
+        body:
+          application/json:
+            example:
+              "message": "Internal server error!"
+          
+      
+
+    

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:munit="http://www.mulesoft.org/schema/mule/munit"
+	xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<munit:config name="geFlows-test-suite.xml" />
+	<munit:test name="getAccountsFlowTest" doc:id="ca582691-4780-45f5-98db-ec6b743475de" description="Test">
+		<munit:execution >
+			<flow-ref doc:name="get:\accounts:salesforce-bi-directional-api-config" doc:id="63050564-8277-46f8-989e-5700e62e3f85" name="get:\accounts:salesforce-bi-directional-api-config"/>
+		</munit:execution>
+		<munit:validation>
+			<munit-tools:assert-equals doc:name="Assert equals" doc:id="6651252e-2023-4f86-9632-415deeec3a69" actual="#[payload]" expected="#[payload]"/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="postAccountsFlowTest" doc:id="477d7ddd-4a46-4af5-b488-70922f4477a4" >
+		<munit:behavior>
+			<flow-ref doc:name="accountsBusinessLogicFlow" doc:id="185ed777-d3ce-431e-95f8-d2bccb074e27" name="accountsBusinessLogicFlow"/>
+		</munit:behavior>
+		<munit:execution>
+			<flow-ref doc:name="post:\accounts:application\json:salesforce-bi-directional-api-config" doc:id="786dbb71-e2ec-46da-ae12-5aaa0d42bc4a" name="post:\accounts:application\json:salesforce-bi-directional-api-config"/>
+		</munit:execution>
+		<munit:validation>
+			<munit-tools:assert-equals doc:name="Assert equals" doc:id="81ec0dec-f6fd-42fb-9aa0-f6eddd919265" actual="#[payload]" expected='#[message: "Account created successfully"]'/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="getContactsTest" doc:id="64fc5bc0-43b7-4748-b292-5b437cb944bb" >
+		<munit:execution >
+			<flow-ref doc:name="get:\contacts:salesforce-bi-directional-api-config" doc:id="21d1fa1c-f8b9-4cf8-87ff-b0c96b114e18" name="get:\contacts:salesforce-bi-directional-api-config"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-equals doc:name="Assert equals" doc:id="e086c4ae-c11e-4c0e-9d88-4337247d7666" actual="#[payload]" expected="#[payload]"/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="postContactsTest" doc:id="d2817762-c36c-4b70-8476-716e9ebe4d9f" >
+		<munit:behavior >
+			<flow-ref doc:name="contactsBusinessLogicFlow" doc:id="3abdc9f8-33dd-45a6-84fc-c673881dca3e" name="contactsBusinessLogicFlow"/>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="post:\contacts:application\json:salesforce-bi-directional-api-config" doc:id="efc1a557-fce3-4e5d-a7db-81eed16fa03d" name="post:\contacts:application\json:salesforce-bi-directional-api-config"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-equals doc:name="Assert equals" doc:id="8857a954-c35b-44bc-98e6-b2b959cb6293" actual="#[payload]" expected='#[message: "Contacts created successfully"]'/>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>
